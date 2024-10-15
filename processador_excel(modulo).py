@@ -17,7 +17,7 @@ def selecionar_arquivo():
     )
     return file_path
 
-def gerar_lista_aprovados(aprovados):
+def gerar_lista_aprovados(aprovados, exibir_mensagem):
     # Criar a janela principal do Tkinter
     root = tk.Tk()
     root.withdraw()  # Esconde a janela principal do Tkinter
@@ -29,14 +29,15 @@ def gerar_lista_aprovados(aprovados):
         with open("numeros.txt", "w") as f:
             for item in aprovados:
                 f.write(f"{item}\n")
-        print("Lista de aprovados gerada em 'numeros.txt'.")
+        exibir_mensagem("Lista de aprovados gerada em 'numeros.txt'.")
     else:
-        print("Lista de aprovados não foi salva.")
+        exibir_mensagem("Lista de aprovados não foi salva.")
 
     root.destroy()  # Fecha a janela do Tkinter
 
 
-def analisar_primeira_coluna(file_path):
+
+def analisar_primeira_coluna(file_path, exibir_mensagem):
     # Ler o arquivo Excel
     df = pd.read_excel(file_path)
     
@@ -84,15 +85,10 @@ def analisar_primeira_coluna(file_path):
     # Salvar as alterações em um novo arquivo Excel
     novo_workbook.save("erros.xlsx")
 
-    # Exibir os resultados dos erros
-    print("Erros:", erros)
-     # Contagem dos elementos nas listas
-    print(f"Total de erros: {len(erros)}")
-    print(f"Total de aprovados: {len(aprovados)}")
-    print("As linhas com erros foram pintadas de amarelo no arquivo 'erros.xlsx'.")
-
-    # Chamar a função para gerar a lista de aprovados
-    gerar_lista_aprovados(aprovados)
+    # Usar exibir_mensagem para mostrar mensagens na interface
+    exibir_mensagem(f"Total de erros: {len(erros)}")
+    exibir_mensagem(f"Total de aprovados: {len(aprovados)}")
+    exibir_mensagem("As linhas com erros foram pintadas de amarelo no arquivo 'erros.xlsx'.")
 
 # Executa o seletor de arquivos e passa o arquivo selecionado para a função
 if __name__ == "__main__":

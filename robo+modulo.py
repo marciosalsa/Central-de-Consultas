@@ -23,10 +23,12 @@ numeros = []
 tempo_espera = 2  # Tempo de espera inicial em segundos
 
 def abrir_processador_excel():
-    # Selecionar o arquivo e processar com o módulo
-    file_path = processador_excel.selecionar_arquivo()  # Usa a função para selecionar o arquivo
+    file_path = processador_excel.selecionar_arquivo()
     if file_path:
-        processador_excel.analisar_primeira_coluna(file_path)  # Chama a função do módulo
+        processador_excel.analisar_primeira_coluna(file_path, exibir_mensagem=atualizar_display)
+                
+    else:
+        atualizar_display("Nenhum arquivo foi selecionado.")
 
 def atualizar_display(mensagem):
     """Adiciona uma mensagem ao widget de texto e rola para baixo."""
@@ -34,6 +36,7 @@ def atualizar_display(mensagem):
     status_text.insert(tk.END, mensagem + "\n")
     status_text.see(tk.END)  # Rolar para o final
     status_text.config(state=tk.DISABLED)  # Desabilita a edição novamente
+    
 
 def atualizar_tempo_label():
     """Atualiza o texto do rótulo com o tempo de espera atual."""
