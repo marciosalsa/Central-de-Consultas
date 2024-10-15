@@ -4,6 +4,8 @@ from tkinter import filedialog
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 import re
+from tkinter import messagebox
+
 
 def selecionar_arquivo():
     # Abre uma janela para o usuário selecionar o arquivo
@@ -15,19 +17,27 @@ def selecionar_arquivo():
     )
     return file_path
 
-def gerar_lista_aprovados(aprovados):
-    # Perguntar ao usuário se deseja gerar a lista de aprovados
-    resposta = input("Você gostaria de salvar a lista de aprovados em um arquivo .txt? (s/n): ")
-    
-    if resposta.lower() == 's':
-        with open("aprovados.txt", "w") as f:
+def gerar_lista_aprovados(aprovados, exibir_mensagem):
+    # Criar a janela principal do Tkinter
+    root = tk.Tk()
+    root.withdraw()  # Esconde a janela principal do Tkinter
+
+    # Pergunta se o usuário deseja salvar a lista
+    resposta = messagebox.askyesno("Salvar lista", "Você gostaria de salvar a lista de aprovados em um arquivo .txt?")
+
+    if resposta:  # Se o usuário clicar em "Sim"
+        with open("numeros.txt", "w") as f:
             for item in aprovados:
                 f.write(f"{item}\n")
-        print("Lista de aprovados gerada em 'aprovados.txt'.")
+        exibir_mensagem("Lista de aprovados gerada em 'numeros.txt'.")
     else:
-        print("Lista de aprovados não foi salva.")
+        exibir_mensagem("Lista de aprovados não foi salva.")
 
-def analisar_primeira_coluna(file_path):
+    root.destroy()  # Fecha a janela do Tkinter
+
+
+
+def analisar_primeira_coluna(file_path, exibir_mensagem):
     # Ler o arquivo Excel
     df = pd.read_excel(file_path)
     
@@ -39,7 +49,7 @@ def analisar_primeira_coluna(file_path):
     erros = []
     linhas_de_erros = []
 
-    for index, num in enumerate(primeira_coluna):
+    for index, num in primeira_coluna.items():
         # Converter o valor para string e remover hifens e espaços
         num_limpo = re.sub(r'\D', '', str(num))
         
@@ -50,7 +60,7 @@ def analisar_primeira_coluna(file_path):
             aprovados.extend(partes)
         else:
             erros.append(num_limpo)
-            linhas_de_erros.append(index + 2)  # Adiciona 2 para considerar o cabeçalho e a indexação
+            linhas_de_erros.append(index)  # Armazena o índice original
 
     # Criar um novo arquivo Excel para salvar as alterações
     novo_workbook = Workbook()
@@ -68,24 +78,24 @@ def analisar_primeira_coluna(file_path):
             novo_sheet.cell(row=index + 2, column=col_index + 1, value=value)
         
         # Se a linha for de erro, pintar de amarelo
-        if index + 2 in linhas_de_erros:
+        if index in linhas_de_erros:
             for cell in novo_sheet[index + 2]:
                 cell.fill = yellow_fill
 
     # Salvar as alterações em um novo arquivo Excel
     novo_workbook.save("erros.xlsx")
 
-    # Exibir os resultados dos aprovados e erros
-    print("Aprovados:", aprovados)
-    print("Erros:", erros)
-    print("As linhas com erros foram pintadas de amarelo no arquivo 'arquivo_modificado.xlsx'.")
+    # Usar exibir_mensagem para mostrar mensagens na interface
+    exibir_mensagem(f"Total de erros: {len(erros)}")
+    exibir_mensagem(f"Total de aprovados: {len(aprovados)}")
+    exibir_mensagem("As linhas com erros foram pintadas de amarelo no arquivo 'erros.xlsx'.")
 
-    # Chamar a função para gerar a lista de aprovados
-    gerar_lista_aprovados(aprovados)
+    gerar_lista_aprovados(aprovados, exibir_mensagem)
 
 # Executa o seletor de arquivos e passa o arquivo selecionado para a função
-file_path = selecionar_arquivo()
-if file_path:
-    analisar_primeira_coluna(file_path)
-else:
-    print("Nenhum arquivo foi selecionado.")
+if __name__ == "__main__":
+    file_path = selecionar_arquivo()
+    if file_path:
+        analisar_primeira_coluna(file_path)
+    else:
+        print("Nenhum arquivo foi selecionado.")

@@ -203,7 +203,7 @@ def monitorar_teclas():
 def iniciar_interface():
     global root, status_text, btn_iniciar, tempo_label
     root = tk.Tk()
-    root.geometry("250x300")
+    root.geometry("290x352")
     root.title("Controle do Robô")
 
     # Criar um menu
