@@ -24,9 +24,10 @@ tempo_espera = 2  # Tempo de espera inicial em segundos
 
 def abrir_processador_excel():
     file_path = processador_excel.selecionar_arquivo()
+
     if file_path:
         processador_excel.analisar_primeira_coluna(file_path, exibir_mensagem=atualizar_display)
-                
+          
     else:
         atualizar_display("Nenhum arquivo foi selecionado.")
 
