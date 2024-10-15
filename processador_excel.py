@@ -29,7 +29,7 @@ def gerar_lista_aprovados(aprovados, exibir_mensagem):
         with open("numeros.txt", "w") as f:
             for item in aprovados:
                 f.write(f"{item}\n")
-        exibir_mensagem("Lista de aprovados gerada em 'numeros.txt'.")
+        exibir_mensagem("Lista de aprovados gerada em\n'numeros.txt'.")
     else:
         exibir_mensagem("Lista de aprovados não foi salva.")
 
@@ -38,7 +38,7 @@ def gerar_lista_aprovados(aprovados, exibir_mensagem):
 
 
 def analisar_primeira_coluna(file_path, exibir_mensagem):
-    # Ler o arquivo Excel
+    
     df = pd.read_excel(file_path)
     
     # Selecionar a primeira coluna e remover duplicatas
@@ -91,6 +91,7 @@ def analisar_primeira_coluna(file_path, exibir_mensagem):
     exibir_mensagem("As linhas com erros foram pintadas de amarelo no arquivo 'erros.xlsx'.")
 
     gerar_lista_aprovados(aprovados, exibir_mensagem)
+
 
 # Executa o seletor de arquivos e passa o arquivo selecionado para a função
 if __name__ == "__main__":
