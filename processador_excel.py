@@ -5,8 +5,6 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 import re
 from tkinter import messagebox
-import time
-import threading
 
 def selecionar_arquivo(exibir_mensagem):
     root = tk.Tk()
@@ -14,9 +12,8 @@ def selecionar_arquivo(exibir_mensagem):
     file_path = filedialog.askopenfilename(
         title="Selecione o arquivo Excel",
         filetypes=[("Arquivo Excel", "*.xlsx *.xls")]
-    )
-    exibir_mensagem("Processando...")
-
+       )
+        
     return file_path
 
 def gerar_lista_aprovados(aprovados, exibir_mensagem):
