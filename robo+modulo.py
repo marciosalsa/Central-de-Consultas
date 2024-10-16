@@ -222,7 +222,8 @@ def iniciar_interface():
     btn_incrementar.pack(side=tk.LEFT, padx=3)
 
     status_text = tk.Text(root, height=10, width=40)
-    status_text.pack(pady=10)    
+    status_text.pack(pady=10)
+    
    
     root.protocol("WM_DELETE_WINDOW", root.quit)
     root.mainloop()
