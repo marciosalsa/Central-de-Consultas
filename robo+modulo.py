@@ -5,12 +5,7 @@ import threading
 import pygetwindow as gw
 import tkinter as tk
 import keyboard
-import pandas as pd
-from tkinter import filedialog, Menu
-from openpyxl import Workbook
-from openpyxl.styles import PatternFill
-import re
-from tkinter import messagebox
+from tkinter import Menu
 import processador_excel
 
 parar_robo = False
@@ -19,7 +14,24 @@ iniciado = False
 index_atual = 0 
 numeros = []
 tempo_espera = 2 
-lock = threading.Lock()  # Adicionando um Lock para controle de threads
+lock = threading.Lock() 
+
+def monitorar_teclas():
+    """Função para monitorar as teclas Esc e P."""
+    global parar_robo, root
+    while True:
+        if keyboard.is_pressed('esc'):
+            parar_robo = True
+            atualizar_display("Tecla ESC pressionada. \nParando o robô e fechando o programa...")
+            root.quit()
+            break
+        if keyboard.is_pressed('p'):
+            pausar_robo()
+            time.sleep(0.5)  # Pequena pausa para evitar múltiplas ativações
+        time.sleep(0.1)
+
+# Inicia o monitoramento das teclas Esc e P em uma thread separada
+threading.Thread(target=monitorar_teclas, daemon=True).start()
 
 def abrir_processador_excel():
     file_path = processador_excel.selecionar_arquivo()
@@ -31,14 +43,14 @@ def abrir_processador_excel():
 
 def atualizar_display(mensagem):
     """Adiciona uma mensagem ao widget de texto e rola para baixo."""
-    if status_text:  # Verifica se o widget existe
+    if status_text: 
         status_text.config(state=tk.NORMAL)
         status_text.insert(tk.END, mensagem + "\n")
         status_text.see(tk.END)
         status_text.config(state=tk.DISABLED)
     else:
         print("Erro: Widget status_text não encontrado.")
-        
+
 def atualizar_tempo_label():
     """Atualiza o texto do rótulo com o tempo de espera atual."""
     tempo_label.config(text=str(tempo_espera) + "s")  
@@ -163,25 +175,11 @@ def iniciar_robo():
     else:
         atualizar_display("Robô já está em execução.")  
 
-def pausar_robo():
+def pausar_robo(event=None):
     global pausado
     pausado = not pausado
     estado = "pausado" if pausado else "despausado"
     atualizar_display(f"Robô {estado}.")
-
-def monitorar_teclas():
-    global parar_robo, root
-    while True:
-        if keyboard.is_pressed('esc'):
-            parar_robo = True
-            atualizar_display("Tecla ESC pressionada. \nParando o robô e fechando o programa...")
-            root.quit()
-            root.destroy()
-            break
-        if keyboard.is_pressed('p'):
-            pausar_robo()
-            time.sleep(0.1)
-        time.sleep(0.1)
 
 def iniciar_interface():
     global root, status_text, btn_iniciar, tempo_label
@@ -224,10 +222,11 @@ def iniciar_interface():
     btn_incrementar.pack(side=tk.LEFT, padx=3)
 
     status_text = tk.Text(root, height=10, width=40)
-    status_text.pack(pady=10)
-    
-    root.bind('<p>', pausar_robo)
+    status_text.pack(pady=10)    
+   
     root.protocol("WM_DELETE_WINDOW", root.quit)
     root.mainloop()
+
+    threading.Thread(target=monitorar_teclas, daemon=True).start()
 
 iniciar_interface()
