@@ -13,31 +13,32 @@ import re
 from tkinter import messagebox
 import processador_excel
 
-
-
 parar_robo = False
 pausado = False  
 iniciado = False  
 index_atual = 0 
 numeros = []
 tempo_espera = 2 
+lock = threading.Lock()  # Adicionando um Lock para controle de threads
 
 def abrir_processador_excel():
     file_path = processador_excel.selecionar_arquivo()
-
     if file_path:
         processador_excel.analisar_primeira_coluna(file_path, exibir_mensagem=atualizar_display)
-          
+                
     else:
         atualizar_display("Nenhum arquivo foi selecionado.")
 
 def atualizar_display(mensagem):
     """Adiciona uma mensagem ao widget de texto e rola para baixo."""
-    status_text.insert(tk.END, mensagem + "\n")
-    status_text.see(tk.END) 
-    status_text.config(state=tk.DISABLED)  # Desabilita a edição
-    
-
+    if status_text:  # Verifica se o widget existe
+        status_text.config(state=tk.NORMAL)
+        status_text.insert(tk.END, mensagem + "\n")
+        status_text.see(tk.END)
+        status_text.config(state=tk.DISABLED)
+    else:
+        print("Erro: Widget status_text não encontrado.")
+        
 def atualizar_tempo_label():
     """Atualiza o texto do rótulo com o tempo de espera atual."""
     tempo_label.config(text=str(tempo_espera) + "s")  
@@ -45,47 +46,41 @@ def atualizar_tempo_label():
 def incrementar_tempo():
     """Aumenta o tempo de espera em 1 segundo e atualiza o rótulo."""
     global tempo_espera
-    if tempo_espera < 10:  
-        tempo_espera += 1
-        atualizar_display(f"Tempo de espera: {tempo_espera} segundos.")
-        atualizar_tempo_label()  
-    else:
-        atualizar_display("O timer máximo é 10 segundos")  
+    with lock:
+        if tempo_espera < 10:  
+            tempo_espera += 1
+            atualizar_display(f"Tempo de espera: {tempo_espera} segundos.")
+            atualizar_tempo_label()  
+        else:
+            atualizar_display("O timer máximo é 10 segundos")  
 
 def decrementar_tempo():
-    """Diminui o tempo de espera em 1 segundo, mínimo 1 segundo, e atualiza o rótulo."""
+    """Diminui o tempo de espera em 1 segundo, mínimo 1 segundo, e atualiza o rótulo.""" 
     global tempo_espera
-    if tempo_espera > 1:
-        tempo_espera -= 1
-        atualizar_display(f"Tempo de espera: {tempo_espera} segundos.")
-        atualizar_tempo_label()  
-    else:
-        atualizar_display("O timer mínimo é 1 segundo")  
+    with lock:
+        if tempo_espera > 1:
+            tempo_espera -= 1
+            atualizar_display(f"Tempo de espera: {tempo_espera} segundos.")
+            atualizar_tempo_label()  
+        else:
+            atualizar_display("O timer mínimo é 1 segundo")  
 
 def reiniciar_robo():
     global iniciado, index_atual, pausado, parar_robo, numeros
-
-    # Reseta as variáveis globais
     iniciado = False
     index_atual = 0
     pausado = False
     parar_robo = False
-    
     atualizar_display("Reiniciando o robô.")
-
     numeros = ler_numeros_do_arquivo()  # Recarrega todos os números do arquivo
-    
 
-# Função para ler os números do arquivo
 def ler_numeros_do_arquivo():
     with open('numeros.txt', 'r') as file:
         return [num.strip() for num in file.readlines()]
 
-# Função para copiar o número
 def copiar_numero(numero):
     pyperclip.copy(numero)
 
-# Função para focar na janela "agendamento"
 def trocar_janela():
     nomenclatura = "agendamento"
     janelas = gw.getAllTitles()
@@ -97,27 +92,22 @@ def trocar_janela():
             return
     atualizar_display(f"Nenhuma janela encontrada que comece com '{nomenclatura}'.")
 
-# Função para clicar em uma posição específica (coordenadas x, y)
 def clicar_em_posicao(x, y):
-    pyautogui.click(x=240, y=89)
+    pyautogui.click(x=x, y=y)
 
 def apagar_num_anterior():
-    for _ in range(10):  # Aperte 'backspace' 10 vezes
+    for _ in range(10):
         pyautogui.press('backspace')  
 
-# Função para colar o número
 def colar_numero():
     pyautogui.hotkey('ctrl', 'v')
 
-# Função para apertar Enter
 def apertar_enter():
     pyautogui.press('enter')
 
-# Função principal para executar o processo
 def executar_processo():
     global index_atual, pausado, parar_robo
     
-    # Inicia a thread para monitorar a tecla Esc
     monitorar_thread = threading.Thread(target=monitorar_teclas, daemon=True)
     monitorar_thread.start()
 
@@ -125,26 +115,24 @@ def executar_processo():
 
     while not parar_robo:
         if pausado:
-            time.sleep(1)  
+            time.sleep(1)
             continue
 
         if index_atual >= len(numeros):
             atualizar_display("Todos os números processados.")
             return
 
-        numero = numeros[index_atual]  # Pega o número atual
+        numero = numeros[index_atual]
 
-        # Verifica se o número é '0', 'null' ou está vazio
         if numero == '0' or numero.lower() == 'null' or numero == '':
             atualizar_display("Número inválido encontrado.\nRobô pausado.")
             pausado = True
-            index_atual += 1  # Move para o próximo número
+            index_atual += 1
             continue
 
         atualizar_display(f"Número lido: {numero}")
 
-        # Copia o número e processa
-        copiar_numero(numero)              
+        copiar_numero(numero)
         time.sleep(0.1)
         clicar_em_posicao(240, 89)
         time.sleep(0.1)
@@ -158,20 +146,19 @@ def executar_processo():
         time.sleep(0.1)
         apagar_num_anterior()
         
-
-        
-        index_atual += 1
+        with lock:
+            index_atual += 1
         time.sleep(tempo_espera)
 
 def iniciar_robo():
     global iniciado, index_atual
     if not iniciado:  
         iniciado = True
-        btn_iniciar.config(state=tk.DISABLED)  # Desabilita o botão após a primeira execução
+        btn_iniciar.config(state=tk.DISABLED)
         atualizar_display("Robô iniciado.")  
         global numeros
-        numeros = ler_numeros_do_arquivo()  
-        index_atual = 0  # Reseta o índice
+        numeros = ler_numeros_do_arquivo()
+        index_atual = 0
         threading.Thread(target=executar_processo, daemon=True).start()  
     else:
         atualizar_display("Robô já está em execução.")  
@@ -188,35 +175,29 @@ def monitorar_teclas():
         if keyboard.is_pressed('esc'):
             parar_robo = True
             atualizar_display("Tecla ESC pressionada. \nParando o robô e fechando o programa...")
-            root.quit()  
-            root.destroy()  
+            root.quit()
+            root.destroy()
             break
         if keyboard.is_pressed('p'):
             pausar_robo()
-            time.sleep(0.1)  
-        time.sleep(0.1)  
+            time.sleep(0.1)
+        time.sleep(0.1)
 
-# Função para iniciar a interface Tkinter
 def iniciar_interface():
     global root, status_text, btn_iniciar, tempo_label
     root = tk.Tk()
     root.geometry("290x352")
     root.title("Controle do Robô")
 
-    # Criar um menu
     menu_bar = Menu(root)
     root.config(menu=menu_bar)
 
-    # Adicionar um menu "Arquivo"
     arquivo_menu = Menu(menu_bar, tearoff=0)
     menu_bar.add_cascade(label="Arquivo", menu=arquivo_menu)
-
-    # Adicionar um item ao menu "Arquivo"
     arquivo_menu.add_command(label="Processar Excel", command=abrir_processador_excel)
      
     root.attributes("-topmost", True)
 
-    # Rótulo dos botões
     btn_iniciar = tk.Button(root, text="Iniciar", command=iniciar_robo)
     btn_iniciar.pack(pady=10)
 
@@ -229,35 +210,24 @@ def iniciar_interface():
     frame_ajuste = tk.Frame(root)
     frame_ajuste.pack(pady=5)
 
-    # Rótulo indicando "Timer:"
     tempo_texto_label = tk.Label(frame_ajuste, text="Timer:", font=("Arial", 9))
     tempo_texto_label.pack(side=tk.LEFT, padx=1)
 
-    # Rótulo para mostrar o tempo de espera atual
     tempo_label = tk.Label(frame_ajuste, font=("Arial", 9), width=5)
     tempo_label.pack(side=tk.LEFT, padx=1)
-    atualizar_tempo_label()  
+    atualizar_tempo_label()
 
-    # Botão de diminuir tempo (seta para baixo)
     btn_decrementar = tk.Button(frame_ajuste, text="↓", command=decrementar_tempo, font=("Arial", 7), width=3)
     btn_decrementar.pack(side=tk.LEFT, padx=3)
 
-    # Botão de aumentar tempo (seta para cima)
     btn_incrementar = tk.Button(frame_ajuste, text="↑", command=incrementar_tempo, font=("Arial", 7), width=3)
     btn_incrementar.pack(side=tk.LEFT, padx=3)
 
-    # Adiciona um widget Text para exibir informações do robô
     status_text = tk.Text(root, height=10, width=40)
     status_text.pack(pady=10)
     
-    root.bind('<p>', pausar_robo)  
-    root.protocol("WM_DELETE_WINDOW", root.quit)  # Fecha o aplicativo corretamente
+    root.bind('<p>', pausar_robo)
+    root.protocol("WM_DELETE_WINDOW", root.quit)
     root.mainloop()
-    
-    monitorar_thread = threading.Thread(target=monitorar_teclas, daemon=True)
-    monitorar_thread.start()
 
 iniciar_interface()
-
-# Propriedade de Marcio Ferreira Salsa (04/10/2024)
-

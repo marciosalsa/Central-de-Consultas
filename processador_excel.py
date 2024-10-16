@@ -6,28 +6,26 @@ from openpyxl.styles import PatternFill
 import re
 from tkinter import messagebox
 
-def selecionar_arquivo(exibir_mensagem):
+def selecionar_arquivo():
     root = tk.Tk()
     root.withdraw()  
     file_path = filedialog.askopenfilename(
         title="Selecione o arquivo Excel",
         filetypes=[("Arquivo Excel", "*.xlsx *.xls")]
-       )
-        
+    )
     return file_path
 
 def gerar_lista_aprovados(aprovados, exibir_mensagem):
-    
     resposta = messagebox.askyesno("Salvar lista", "Você gostaria de salvar a lista de aprovados em um arquivo .txt?")
     if resposta:
         with open("numeros.txt", "w") as f:
             for item in aprovados:
                 f.write(f"{item}\n")
-        exibir_mensagem("Lista de aprovados gerada em 'numeros.txt'.")
+        exibir_mensagem("Lista de aprovados gerada em\n'numeros.txt'.")
     else:
         exibir_mensagem("Lista de aprovados não foi salva.")
 
-def analisar_primeira_coluna(file_path, exibir_mensagem):
+def analisar_primeira_coluna(file_path, exibir_mensagem=None):
     df = pd.read_excel(file_path)
     primeira_coluna = df.iloc[:, 0].drop_duplicates()
     
@@ -62,9 +60,11 @@ def analisar_primeira_coluna(file_path, exibir_mensagem):
 
     novo_workbook.save("erros.xlsx")
 
-    exibir_mensagem(f"Total de erros: {len(erros)}")
-    exibir_mensagem(f"Total de aprovados: {len(aprovados)}")
-    exibir_mensagem("As linhas com erros foram pintadas de amarelo no arquivo 'erros.xlsx'.")
+
+    if exibir_mensagem:
+        exibir_mensagem(f"Total de erros: {len(erros)}")
+        exibir_mensagem(f"Total de aprovados: {len(aprovados)}")
+        exibir_mensagem("As linhas com erros foram pintadas de amarelo no arquivo 'erros.xlsx'.")
 
     gerar_lista_aprovados(aprovados, exibir_mensagem)
 
@@ -75,14 +75,16 @@ def main():
     label_mensagem = tk.Label(root, text="Clique para processar o arquivo", font=("Arial", 14))
     label_mensagem.pack(pady=20)
     
+    def atualizar_mensagem(nova_mensagem):
+        label_mensagem.config(text=nova_mensagem)
 
     def processar():
         file_path = selecionar_arquivo()
         if file_path:
-            analisar_primeira_coluna(file_path, label_mensagem)
-            
+            atualizar_mensagem("Processando o arquivo...")
+            analisar_primeira_coluna(file_path, atualizar_mensagem)
         else:
-            label_mensagem.config(text="Nenhum arquivo foi selecionado.")
+            atualizar_mensagem("Nenhum arquivo foi selecionado.")
 
     botao = tk.Button(root, text="Iniciar Processamento", command=processar)
     botao.pack(pady=10)
