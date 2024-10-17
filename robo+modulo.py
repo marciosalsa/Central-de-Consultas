@@ -119,9 +119,6 @@ def apertar_enter():
 
 def executar_processo():
     global index_atual, pausado, parar_robo
-    
-    monitorar_thread = threading.Thread(target=monitorar_teclas, daemon=True)
-    monitorar_thread.start()
 
     trocar_janela()
 
@@ -222,12 +219,9 @@ def iniciar_interface():
     btn_incrementar.pack(side=tk.LEFT, padx=3)
 
     status_text = tk.Text(root, height=10, width=40)
-    status_text.pack(pady=10)
-    
+    status_text.pack(pady=10)    
    
     root.protocol("WM_DELETE_WINDOW", root.quit)
     root.mainloop()
-
-    threading.Thread(target=monitorar_teclas, daemon=True).start()
 
 iniciar_interface()
