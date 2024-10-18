@@ -142,22 +142,26 @@ def executar_processo():
         atualizar_display(f"Número lido: {numero}")
 
         copiar_numero(numero)
-        time.sleep(0.1)
+        
         clicar_em_posicao(240, 89)
-        time.sleep(0.1)
+        
         apagar_num_anterior()
-        time.sleep(0.1)
+        
         colar_numero()
-        time.sleep(0.1)
+        
         apertar_enter()
-        time.sleep(2)
+        time.sleep(tempo_espera)
         apertar_enter()
-        time.sleep(0.1)
+        
+        apagar_num_anterior()
+        
+        apertar_enter()
+        
         apagar_num_anterior()
         
         with lock:
             index_atual += 1
-        time.sleep(tempo_espera)
+        
 
 def iniciar_robo():
     global iniciado, index_atual

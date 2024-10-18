@@ -1,6 +1,7 @@
 import pandas as pd
 import tkinter as tk
 from tkinter import filedialog
+from fuzzywuzzy import process
 
 def selecionar_arquivo():
     root = tk.Tk()
@@ -40,7 +41,6 @@ def localizar_coluna_paciente(file_path, max_attempts=5):
     return None
 
 def somar_linhas_por_nome(file_path, coluna_paciente_idx, coluna_valor_idx):
-    
     if coluna_paciente_idx == 1:
         df = pd.read_excel(file_path, skiprows=4)  
     else:
@@ -55,28 +55,46 @@ def somar_linhas_por_nome(file_path, coluna_paciente_idx, coluna_valor_idx):
 
     # Agrupar pela coluna "paciente" e somar os valores correspondentes
     soma_por_paciente = df.groupby(coluna_paciente)[coluna_valor].sum().reset_index()
-
-    # Exibir o resultado
-    print("Soma por paciente:")
-    print(soma_por_paciente)
     
-    # Exibir os nomes das colunas do DataFrame resultante
-    print("Colunas do DataFrame resultante:", soma_por_paciente.columns.tolist())
-    
-    # Renomear a coluna "paciente" para garantir consistência
-    soma_por_paciente.rename(columns={coluna_paciente: 'paciente'}, inplace=True)
+    # Renomear as colunas para garantir consistência
+    soma_por_paciente.rename(columns={coluna_paciente: 'paciente', coluna_valor: 'valor'}, inplace=True)
 
     return soma_por_paciente
 
-def comparar_dataframes(df1, df2, tolerancia=0.01):
-    # Realiza uma mesclagem (join) dos DataFrames para comparar
-    comparacao = pd.merge(df1, df2, on='paciente', how='outer', suffixes=('_1', '_2'))
-    comparacao['diferenca'] = comparacao.iloc[:, 1] - comparacao.iloc[:, 2]  # Usando índices para referenciar as colunas
+def comparar_dataframes_aproximados(df1, df2, tolerancia=0.01):
+    # Extraindo os nomes dos pacientes dos dois DataFrames
+    pacientes_df1 = df1['paciente'].tolist()
+    pacientes_df2 = df2['paciente'].tolist()
     
+    # Criar uma lista para armazenar as correspondências
+    correspondencias = []
+
+    for paciente1 in pacientes_df1:
+        # Encontrar o paciente mais próximo no df2
+        paciente_mais_proximo, similaridade = process.extractOne(paciente1, pacientes_df2)
+        
+        # Verificar se a similaridade é aceitável (por exemplo, acima de 80%)
+        if similaridade >= 80:
+            correspondencias.append((paciente1, paciente_mais_proximo))
+
+    # Criar um DataFrame a partir das correspondências
+    df_correspondencias = pd.DataFrame(correspondencias, columns=['paciente_df1', 'paciente_df2'])
+
+    # Mesclando os DataFrames originais usando as correspondências
+    df1_merged = pd.merge(df1, df_correspondencias, left_on='paciente', right_on='paciente_df1', how='inner')
+    df2_merged = pd.merge(df2, df_correspondencias, left_on='paciente', right_on='paciente_df2', how='inner')
+
+    # Adicionando os valores correspondentes ao DataFrame mesclado
+    comparacao = pd.merge(df1_merged, df2_merged, left_on='paciente_df1', right_on='paciente_df2', suffixes=('_1', '_2'))
+
+    # Cálculo da diferença
+    comparacao['diferenca'] = comparacao['valor_1'] - comparacao['valor_2']  # Ajuste o nome da coluna conforme necessário
+
     # Filtrar as diferenças que não são iguais a zero ou que não estão dentro da tolerância
     diferencas = comparacao[(comparacao['diferenca'].isna()) | (abs(comparacao['diferenca']) > tolerancia)]
-    
+
     return diferencas
+
 # Execução
 file_path1 = selecionar_arquivo()
 if file_path1:
@@ -98,14 +116,11 @@ if file_path1:
                 resultado_soma2 = somar_linhas_por_nome(file_path2, coluna_paciente_idx_2, coluna_valor_idx_2)
                 
                 # Comparar os dois DataFrames
-                comparacao_resultado = comparar_dataframes(resultado_soma1, resultado_soma2)
-
-                # Filtrar apenas as diferenças diferentes de zero
-                diferencas = comparacao_resultado[comparacao_resultado['diferenca'] != 0]
+                comparacao_resultado = comparar_dataframes_aproximados(resultado_soma1, resultado_soma2)
 
                 # Exibir os resultados da comparação
                 print("Comparação entre as duas planilhas (diferenças):")
-                print(diferencas)
+                print(comparacao_resultado)
 
                 # Salvar as diferenças em um novo arquivo Excel
                 output_path_diff = filedialog.asksaveasfilename(
@@ -114,7 +129,7 @@ if file_path1:
                     filetypes=[("Arquivo Excel", "*.xlsx")]
                 )
                 if output_path_diff:
-                    diferencas.to_excel(output_path_diff, index=False)
+                    comparacao_resultado.to_excel(output_path_diff, index=False)
                     print(f"Arquivo Excel das diferenças salvo com sucesso em {output_path_diff}")
 else:
     print("Nenhum arquivo foi selecionado.")
