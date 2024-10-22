@@ -49,13 +49,13 @@ root = Tk()
 root.title("Processador de Planilhas")
 
 # Botões para selecionar arquivos
-botao_arquivo1 = Button(root, text="Selecionar Planilha 1", command=selecionar_arquivo1)
+botao_arquivo1 = Button(root, text="Selecionar Planilha Fontana", command=selecionar_arquivo1)
 botao_arquivo1.pack(pady=10)
 
 label_arquivo1 = Label(root, text="Nenhum arquivo selecionado")
 label_arquivo1.pack()
 
-botao_arquivo2 = Button(root, text="Selecionar Planilha 2", command=selecionar_arquivo2)
+botao_arquivo2 = Button(root, text="Selecionar Planilha Agendamento", command=selecionar_arquivo2)
 botao_arquivo2.pack(pady=10)
 
 label_arquivo2 = Label(root, text="Nenhum arquivo selecionado")
