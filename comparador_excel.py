@@ -71,7 +71,9 @@ def localizar_similaridades(df):
     # Remove as linhas identificadas
     df_final = df_final.drop(to_drop, errors='ignore')
 
-    df_final = df_final[df_final['diferenca'] != 0]
+    tolerancia = 0.01
+
+    df_final = df_final[abs(df_final['diferenca']) > tolerancia]
 
     return df_final.reset_index(drop=True)
 
