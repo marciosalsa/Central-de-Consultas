@@ -7,6 +7,8 @@ import tkinter as tk
 import keyboard
 from tkinter import Menu
 import processador_excel
+import comparador_excel
+from comparador_excel import iniciar_interface
 
 parar_robo = False
 pausado = False  
@@ -32,6 +34,11 @@ def monitorar_teclas():
 
 # Inicia o monitoramento das teclas Esc e P em uma thread separada
 threading.Thread(target=monitorar_teclas, daemon=True).start()
+
+def abrir_comparador_excel():
+    """Abre a interface do comparador de Excel."""
+    comparador_excel.iniciar_interface()  
+
 
 def abrir_processador_excel():
     file_path = processador_excel.selecionar_arquivo()
@@ -141,22 +148,15 @@ def executar_processo():
 
         atualizar_display(f"Número lido: {numero}")
 
-        copiar_numero(numero)
-        
-        clicar_em_posicao(240, 89)
-        
-        apagar_num_anterior()
-        
-        colar_numero()
-        
+        copiar_numero(numero)        
+        clicar_em_posicao(240, 89)        
+        apagar_num_anterior()        
+        colar_numero()        
         apertar_enter()
         time.sleep(tempo_espera)
-        apertar_enter()
-        
-        apagar_num_anterior()
-        
-        apertar_enter()
-        
+        apertar_enter()        
+        apagar_num_anterior()        
+        apertar_enter()        
         apagar_num_anterior()
         
         with lock:
@@ -194,6 +194,7 @@ def iniciar_interface():
     arquivo_menu = Menu(menu_bar, tearoff=0)
     menu_bar.add_cascade(label="Arquivo", menu=arquivo_menu)
     arquivo_menu.add_command(label="Processar Excel", command=abrir_processador_excel)
+    arquivo_menu.add_command(label="Comparar Excel", command=abrir_comparador_excel)
      
     root.attributes("-topmost", True)
 
